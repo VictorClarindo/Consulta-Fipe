@@ -2,11 +2,15 @@ package br.com.alura.consultafipe.principal;
 
 import br.com.alura.consultafipe.model.Dados;
 import br.com.alura.consultafipe.model.Modelos;
+import br.com.alura.consultafipe.model.Veiculos;
 import br.com.alura.consultafipe.service.ConsumoApi;
 import br.com.alura.consultafipe.service.ConverteDados;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
 
@@ -31,7 +35,7 @@ public class Principal {
 
         String opcao = scanner.nextLine();
 
-        if (opcao.toLowerCase().contains("carr")) {
+        if (opcao.toLowerCase().contains("car")) {
             endereco = URL_BASE + "carros/marcas/";
         } else if (opcao.toLowerCase().contains("mot")) {
             endereco = URL_BASE + "motos/marcas/";
@@ -44,6 +48,7 @@ public class Principal {
         marcas.stream()
                 .sorted(Comparator.comparing(Dados::nome))
                 .forEach(System.out::println);
+
 
         System.out.println("Agora informe o código da marca para consulta: ");
         var codigoMarca = scanner.nextLine();
@@ -58,6 +63,33 @@ public class Principal {
                 .sorted(Comparator.comparing(Dados::codigo))
                 .forEach(System.out::println);
 
+        System.out.println("\nDigite um trecho do carro que gostaria de pesquisar: ");
+        var veiculoABuscar = scanner.nextLine();
 
+        var modeloBuscado = modelosLista.modelos().stream()
+                .filter(dados -> dados.nome().toLowerCase().contains(veiculoABuscar.toLowerCase()))
+                .collect(Collectors.toList());
+
+        System.out.println("\n Modelos filtrados:");
+        modeloBuscado.forEach(System.out::println);
+
+        System.out.println("Agora digite o codigo do modelo que quer saber o valor: ");
+        var codigoModelo = scanner.nextLine();
+
+        endereco += codigoModelo + "/anos/";
+
+        json = consumoApi.obterDadosApi(endereco);
+
+        var anos = conversor.obterLista(json, Dados.class);
+        List<Veiculos> veiculosLista = new ArrayList<>();
+
+        for (int i = 0; i < anos.size(); i++) {
+            var enderecoAno = endereco + anos.get(i).codigo();
+            json = consumoApi.obterDadosApi(enderecoAno);
+            Veiculos veiculo = conversor.obterDados(json, Veiculos.class);
+            veiculosLista.add(veiculo);
+        }
+        veiculosLista.forEach(System.out::println);
     }
 }
+
